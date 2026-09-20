@@ -2,13 +2,7 @@ import torch
 
 
 def evaluate(model, loader, criterion, device):
-    """
-    Evaluate the model on a dataset.
-
-    Returns:
-        mse: Mean Squared Error
-        mae: Mean Absolute Error
-    """
+    """Evaluate the model on a dataset."""
 
     model.eval()
 
