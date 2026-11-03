@@ -1,0 +1,2 @@
+experiment,mean_absolute_error,uncertainty_error_correlation,low_uncertainty_mae,high_uncertainty_mae
+MC Dropout,0.274627,0.21997,0.24349,0.305764

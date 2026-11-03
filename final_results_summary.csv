@@ -1,0 +1,12 @@
+component,result
+Dataset,QM9
+Target,HOMO-LUMO gap
+Dataset split,80% train / 10% validation / 10% test
+Random seed,42
+Test molecules,"13,084"
+Best architecture experiment,GCN comparison run
+Best comparison R2,0.933578
+MC Dropout correlation,0.219970
+Low uncertainty MAE,0.243490
+High uncertainty MAE,0.305764
+Explainability,Gradient-based atom importance

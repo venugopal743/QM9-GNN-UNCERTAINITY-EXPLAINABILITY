@@ -1,8 +1,7 @@
-torch
-torch-geometric
-rdkit
-pandas
-numpy
-matplotlib
-scikit-learn
-tqdm
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pandas>=2.0
+numpy>=1.26
+# only needed to run the tests
+pytest>=8.0
+httpx>=0.27
