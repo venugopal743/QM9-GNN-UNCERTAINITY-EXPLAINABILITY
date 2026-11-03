@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QM9·GraphMol Lab — MolecularAI</title>
+  <meta name="description" content="QM9 graph neural network research, uncertainty, and explainability workspace.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a1018'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%232dd4bf'%3E%E2%AC%A1%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#overview"><span class="brand-mark">⬡</span> QM9<span class="dot">·</span>GraphMol <em>Lab</em></a>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#dataset">Dataset</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#training">Training</a>
+      <a href="#uncertainty">Uncertainty</a>
+      <a href="#explainability">Explainability</a>
+      <a href="#errors">Errors</a>
+      <a href="#explorer">Explorer</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section id="overview" class="hero">
+      <p class="eyebrow">Capstone research workspace · MolecularAI</p>
+      <h1>Predicting molecular <span class="grad">HOMO‑LUMO gaps</span> with graph neural networks.</h1>
+      <p class="lede">Atoms are nodes, bonds are edges. We train GCN, GraphSAGE and GAT models on QM9, quantify how
+        sure each prediction is with Monte‑Carlo Dropout, and show which atoms drive the output.</p>
+      <div class="kpis" id="kpis"><div class="skeleton"></div></div>
+      <div class="findings" id="findings"></div>
+    </section>
+
+    <!-- DATASET -->
+    <section id="dataset">
+      <div class="sec-head"><span class="num">01</span><h2>Dataset &amp; split</h2></div>
+      <div class="grid two">
+        <div class="card">
+          <h3>QM9</h3>
+          <p class="muted">≈130k small organic molecules with quantum‑chemical properties. The prediction target is
+            the HOMO‑LUMO gap (QM9 target index 4), measured in electron‑volts.</p>
+          <dl class="facts" id="dataset-facts"></dl>
+        </div>
+        <div class="card">
+          <h3>Reproducible 80 / 10 / 10 split</h3>
+          <div class="splitbar" id="splitbar"></div>
+          <p class="muted small">Random seed 42. The scaler (mean/std of the target) is fit on the training split only.</p>
+          <div class="chart-wrap short"><canvas id="chart-target"></canvas></div>
+          <p class="muted small" id="target-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENCHMARK -->
+    <section id="benchmark">
+      <div class="sec-head"><span class="num">02</span><h2>Model benchmark</h2></div>
+      <p class="sec-lede">Test‑set results on 13,084 held‑out molecules. Lower error and higher R² are better.</p>
+      <div class="grid two">
+        <div class="card">
+          <h3>R² by model</h3>
+          <div class="chart-wrap"><canvas id="chart-r2"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>MAE and RMSE (eV)</h3>
+          <div class="chart-wrap"><canvas id="chart-err"></canvas></div>
+        </div>
+      </div>
+      <div class="card table-card">
+        <table id="model-table">
+          <thead><tr><th>Model</th><th>MSE</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Architecture</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note" id="benchmark-note"></p>
+    </section>
+
+    <!-- TRAINING -->
+    <section id="training">
+      <div class="sec-head"><span class="num">03</span><h2>Training curves</h2></div>
+      <p class="sec-lede">10 epochs, Adam, learning rate 0.001, batch size 64. Errors here are in <strong>standardised</strong> target units.</p>
+      <div class="card">
+        <div class="seg" id="history-metric">
+          <button data-m="val_mse" class="on">Validation MSE</button>
+          <button data-m="train_mse">Training MSE</button>
+          <button data-m="val_mae">Validation MAE</button>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-history"></canvas></div>
+      </div>
+      <div class="grid three figs">
+        <figure class="card"><img loading="lazy" src="img/baseline/training_validation_mse.png" alt="Original GCN training vs validation MSE"><figcaption>Original GCN — train vs validation MSE</figcaption></figure>
+        <figure class="card"><img loading="lazy" src="img/improved/training_validation_mse.png" alt="Improved GCN training vs validation MSE"><figcaption>Improved GCN — train vs validation MSE</figcaption></figure>
+        <figure class="card"><img loading="lazy" src="img/improved/actual_vs_predicted.png" alt="Improved GCN actual vs predicted"><figcaption>Improved GCN — actual vs predicted gap</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- UNCERTAINTY -->
+    <section id="uncertainty">
+      <div class="sec-head"><span class="num">04</span><h2>Uncertainty quantification</h2></div>
+      <p class="sec-lede">Monte‑Carlo Dropout: dropout stays on at inference and the model is sampled <strong>50</strong> times per molecule.
+        The mean is the prediction and the standard deviation is the uncertainty.</p>
+      <div class="kpis small-kpis" id="u-kpis"></div>
+      <div class="grid two">
+        <div class="card">
+          <h3>Uncertainty vs absolute error</h3>
+          <p class="muted small">2,000 randomly sampled test molecules. Line: mean error per uncertainty quintile.</p>
+          <div class="chart-wrap"><canvas id="chart-u-scatter"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Error rises with uncertainty</h3>
+          <p class="muted small">Test set split into five equal groups by predicted uncertainty.</p>
+          <div class="chart-wrap"><canvas id="chart-u-bins"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Selective prediction</h3>
+          <p class="muted small">MAE if only the most‑confident share of molecules is kept.</p>
+          <div class="chart-wrap"><canvas id="chart-retention"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Calibration</h3>
+          <p class="muted small">Share of molecules whose error falls within k·σ, against what a well‑calibrated Gaussian would give.</p>
+          <div class="chart-wrap"><canvas id="chart-calibration"></canvas></div>
+        </div>
+      </div>
+      <p class="note" id="u-note"></p>
+    </section>
+
+    <!-- EXPLAINABILITY -->
+    <section id="explainability">
+      <div class="sec-head"><span class="num">05</span><h2>Explainability</h2></div>
+      <p class="sec-lede">Gradient‑based atom importance: how strongly the predicted gap changes when each atom's input features change.</p>
+      <div class="grid two">
+        <figure class="card"><img loading="lazy" src="img/explain/atom_importance.png" alt="Gradient importance per atom"><figcaption>Importance score per atom for test molecule 0 (25 atoms).</figcaption></figure>
+        <figure class="card"><img loading="lazy" src="img/explain/explained_molecule.png" alt="Molecule with highlighted important atoms"><figcaption>The ten most important atoms highlighted; deeper red means higher importance.</figcaption></figure>
+      </div>
+      <div class="card method">
+        <h3>How it works</h3>
+        <ol>
+          <li>Run the trained GCN on one molecule with gradients enabled on the node features.</li>
+          <li>Back‑propagate the (standardised) predicted gap to each atom's 11 input features.</li>
+          <li>Take the L2 norm of each atom's gradient vector as its importance score.</li>
+        </ol>
+        <p class="muted small">Caveat: the drawing is rebuilt from atomic numbers and connectivity with every bond drawn as single,
+          so bond orders are not shown. Importance is a local sensitivity measure, not a causal chemistry claim.</p>
+      </div>
+    </section>
+
+    <!-- ERRORS -->
+    <section id="errors">
+      <div class="sec-head"><span class="num">06</span><h2>Error analysis</h2></div>
+      <div class="grid two">
+        <div class="card">
+          <h3>Error by molecule size</h3>
+          <p class="muted small">Mean absolute error per atom count (bars) with number of molecules (line).</p>
+          <div class="chart-wrap"><canvas id="chart-size"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Signed error distribution</h3>
+          <p class="muted small">Prediction − target, in eV. Centred near zero, so there is almost no systematic bias.</p>
+          <div class="chart-wrap"><canvas id="chart-hist"></canvas></div>
+        </div>
+      </div>
+      <div class="card table-card">
+        <h3 class="pad">Twenty hardest test molecules</h3>
+        <p class="muted small pad">Difficulty score = 0.5 × error (scaled by the maximum error) + 0.5 × uncertainty (scaled by the maximum uncertainty).</p>
+        <table id="difficult-table">
+          <thead><tr><th>#</th><th>Atoms</th><th>Target</th><th>Prediction</th><th>Error</th><th>Uncertainty</th><th>Difficulty</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXPLORER -->
+    <section id="explorer">
+      <div class="sec-head"><span class="num">07</span><h2>Test‑set explorer</h2></div>
+      <p class="sec-lede">Browse all 13,084 test predictions. Click a row to see its prediction interval.</p>
+      <div class="card filters">
+        <label>Sort by
+          <select id="f-sort">
+            <option value="absolute_error">Absolute error</option>
+            <option value="uncertainty">Uncertainty</option>
+            <option value="target">Target gap</option>
+            <option value="prediction">Predicted gap</option>
+            <option value="num_atoms">Atoms</option>
+            <option value="id">Molecule id</option>
+          </select>
+        </label>
+        <label>Order
+          <select id="f-order"><option value="desc">High → low</option><option value="asc">Low → high</option></select>
+        </label>
+        <label>Min atoms <input id="f-min" type="number" min="1" max="30" placeholder="any"></label>
+        <label>Max atoms <input id="f-max" type="number" min="1" max="30" placeholder="any"></label>
+        <label>Max uncertainty <input id="f-maxu" type="number" step="0.01" min="0" placeholder="any"></label>
+        <label>Go to id <input id="f-id" type="number" min="0" max="13083" placeholder="0–13083"></label>
+        <button id="f-apply" class="btn">Apply</button>
+      </div>
+      <div class="grid explorer">
+        <div class="card table-card">
+          <table id="mol-table">
+            <thead><tr><th>ID</th><th>Atoms</th><th>Target</th><th>Predicted</th><th>|Error|</th><th>σ</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="pager"><button id="p-prev" class="btn ghost">‹ Prev</button><span id="p-info"></span><button id="p-next" class="btn ghost">Next ›</button></div>
+        </div>
+        <div class="card detail" id="detail"><p class="muted">Select a molecule to inspect it.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>QM9·GraphMol Lab · built from the <a href="https://github.com/venugopal743/QM9-GNN-UNCERTAINITY-EXPLAINABILITY" target="_blank" rel="noopener">QM9‑GNN‑UNCERTAINITY‑EXPLAINABILITY</a> results.
+      Gap values in eV.</p>
+  </footer>
+
+  <script src="vendor/chart.umd.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/static-api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
